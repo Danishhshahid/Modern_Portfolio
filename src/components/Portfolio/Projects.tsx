@@ -319,13 +319,13 @@ export const Projects = () => {
           transition={{ duration: 0.6 }}
           className="flex justify-center mb-12"
         >
-          <div className="flex p-1 bg-surface/50 rounded-lg backdrop-blur-sm border border-border/50 shadow-glow">
+          <div className="flex p-1">
             <motion.button
               onClick={() => setActiveTab('web')}
               variants={tabVariants}
               animate={activeTab === 'web' ? 'active' : 'inactive'}
               transition={{ duration: 0.3 }}
-              className="flex items-center px-6 py-3 rounded-md transition-all duration-300 border"
+              className="flex items-center px-6 py-3 rounded-md transition-all duration-300 border shadow-glow"
             >
               <Globe className="h-5 w-5 mr-2" />
               Web Development
@@ -336,7 +336,7 @@ export const Projects = () => {
               variants={tabVariants}
               animate={activeTab === 'ai' ? 'active' : 'inactive'}
               transition={{ duration: 0.3 }}
-              className="flex items-center px-6 py-3 rounded-md transition-all duration-300 border ml-2"
+              className="flex items-center px-6 py-3 rounded-md transition-all duration-300 border ml-2 shadow-glow"
             >
               <Brain className="h-5 w-5 mr-2" />
               Agentic AI Systems

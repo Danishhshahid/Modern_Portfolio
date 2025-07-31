@@ -20,7 +20,7 @@ export const Hero = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
         >
-          <h1 className="hero-text mb-6 text-subtle-glow">
+          <h1 className="hero-text mb-6 text-subtle-glow text-4xl sm:text-5xl md:text-6xl lg:text-7xl">
             Danish Shahid
             Abbasi
           </h1>
