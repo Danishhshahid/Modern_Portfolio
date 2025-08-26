@@ -6,6 +6,7 @@ const navItems = [
   { name: 'Home', href: '#home' },
   { name: 'Skills', href: '#skills' },
   { name: 'Projects', href: '#projects' },
+  { name: 'Presentations', href: '#presentations' },
   { name: 'Contact', href: '#contact' }
 ];
 
@@ -42,12 +43,12 @@ export const Navigation = () => {
         isScrolled ? 'backdrop-blur-md bg-background/15' : 'bg-transparent'
       }`}
     >
-      <div className="max-w-6xl mx-auto px-6 py-4">
+      <div className="max-w-6xl mx-auto px-4 md:px-6 py-2 md:py-4">
         <div className="flex items-center justify-between">
           {/* Logo */}
           <motion.div
             whileHover={{ scale: 1.05 }}
-            className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent cursor-pointer "
+            className="text-base md:text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent cursor-pointer "
             onClick={() => scrollToSection('#home')}
           >
             Danish Shahid Abbasi
@@ -85,7 +86,7 @@ export const Navigation = () => {
           >
             <Button
               onClick={() => scrollToSection('#contact')}
-              className="btn-primary text-sm hover:bg-indigo-950"
+              className="btn-primary text-xs md:text-sm px-4 py-2 md:px-6 md:py-3 hover:bg-indigo-950"
             >
               Let's Talk
             </Button>

@@ -1,11 +1,13 @@
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ExternalLink, Github, Brain, Globe, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { ExternalLink, Github, Brain, Globe } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { sanityClient, hasSanity } from '@/lib/sanity';
+import { PROJECTS_BY_CATEGORY } from '@/lib/queries';
 
-const webProjects = [
+const webProjectsFallback = [
   {
     title: "E-Commerce Platform",
     description: "Full-stack e-commerce solution with real-time inventory management, payment processing, and advanced analytics dashboard.",
@@ -49,7 +51,7 @@ const webProjects = [
   }
 ];
 
-const aiProjects = [
+const aiProjectsFallback = [
   {
     title: "Intelligent Content Generator",
     description: "AI-powered content creation platform that generates marketing copy, blog posts, and social media content using advanced language models.",
@@ -93,314 +95,174 @@ const aiProjects = [
   }
 ];
 
-const CarouselItem = ({ project, index, direction, lighten }: { project: any; index: number; direction: 'next' | 'prev'; lighten: boolean }) => (
-  <motion.div
-    key={`${project.title}-${index}`}
-    initial={{ 
-      opacity: 0, 
-      x: direction === 'next' ? (lighten ? 120 : 300) : (lighten ? -120 : -300),
-      scale: lighten ? 0.95 : 0.8 
-    }}
-    animate={{ 
-      opacity: 1, 
-      x: 0,
-      scale: 1 
-    }}
-    exit={{ 
-      opacity: 0, 
-      x: direction === 'next' ? (lighten ? -120 : -300) : (lighten ? 120 : 300),
-      scale: lighten ? 0.95 : 0.8 
-    }}
-    transition={{ 
-      duration: lighten ? 0.35 : 0.5, 
-      ease: [0.4, 0, 0.2, 1],
-      opacity: { duration: lighten ? 0.2 : 0.3 }
-    }}
-    className="w-full"
-  >
-    <Card className="glass-card-elevated overflow-hidden group hover:scale-[1.02] transition-all duration-500 bg-transparent/15 shadow-glow border border-white/10 backdrop-blur-sm">
-      <div className="aspect-video overflow-hidden relative">
-        <motion.img 
-          src={project.image} 
-          alt={project.title}
-          className="w-full h-full object-cover transition-transform duration-700"
-          whileHover={lighten ? undefined : { scale: 1.1 }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+type Project = {
+  title: string;
+  description: string;
+  image: string;
+  technologies: string[];
+  liveUrl: string;
+  githubUrl: string;
+};
+
+const ProductCard = ({ project, lighten }: { project: Project; lighten: boolean }) => (
+  <Card className="glass-card-elevated overflow-hidden group bg-transparent/15 shadow-glow border border-white/10 backdrop-blur-sm w-[85vw] sm:w-[70vw] md:w-[48%] lg:w-[32%] flex-shrink-0 snap-start">
+    <div className="aspect-video overflow-hidden relative">
+      <motion.img 
+        src={project.image} 
+        alt={project.title}
+        className="w-full h-full object-cover transition-transform duration-500"
+        whileHover={lighten ? undefined : { scale: 1.05 }}
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+    </div>
+    
+    <div className="p-5 space-y-3">
+      <h3 className="text-lg font-semibold group-hover:text-primary transition-colors duration-200">{project.title}</h3>
+      <p className="text-muted-foreground line-clamp-3 leading-relaxed text-sm">{project.description}</p>
+      <div className="flex flex-wrap gap-2">
+        {project.technologies.map((tech) => (
+          <Badge key={tech} variant="secondary" className="bg-surface/50 border border-white/5 text-xs">
+            {tech}
+          </Badge>
+        ))}
       </div>
-      
-      <div className="p-6 space-y-4">
-        <motion.h3 
-          className="text-xl font-semibold group-hover:text-primary transition-colors duration-300"
-          initial={{ opacity: 0, y: lighten ? 10 : 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        >
-          {project.title}
-        </motion.h3>
-        
-        <motion.p 
-          className="text-muted-foreground line-clamp-3 leading-relaxed"
-          initial={{ opacity: 0, y: lighten ? 10 : 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-        >
-          {project.description}
-        </motion.p>
-        
-        <motion.div 
-          className="flex flex-wrap gap-2"
-          initial={{ opacity: 0, y: lighten ? 10 : 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-        >
-          {project.technologies.map((tech, i) => (
-            <Badge 
-              key={tech} 
-              variant="secondary" 
-              className="bg-surface/50 border border-white/5 text-xs hover:bg-primary/10 transition-colors duration-300"
-            >
-              {tech}
-            </Badge>
-          ))}
-        </motion.div>
-        
-        <motion.div 
-          className="flex gap-3 pt-2"
-          initial={{ opacity: 0, y: lighten ? 10 : 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-        >
-          <Button size="sm" className="btn-primary flex-1 hover:scale-105 transition-transform duration-200">
-            <ExternalLink className="h-4 w-4 mr-2" />
-            Live Demo
-          </Button>
-          <Button size="sm" variant="outline" className="glass-card flex-1 hover:scale-105 transition-transform duration-200">
-            <Github className="h-4 w-4 mr-2" />
-            Code
-          </Button>
-        </motion.div>
+      <div className="flex gap-3 pt-2">
+        <Button size="sm" asChild className="btn-primary flex-1">
+          <a href={project.liveUrl} target="_blank" rel="noreferrer">
+            <ExternalLink className="h-4 w-4 mr-2" /> Live
+          </a>
+        </Button>
+        <Button size="sm" variant="outline" asChild className="glass-card flex-1">
+          <a href={project.githubUrl} target="_blank" rel="noreferrer">
+            <Github className="h-4 w-4 mr-2" /> Code
+          </a>
+        </Button>
       </div>
-    </Card>
-  </motion.div>
+    </div>
+  </Card>
 );
 
-const ProjectCarousel = ({ projects, activeSlide, setActiveSlide }) => {
-  const [direction, setDirection] = useState('next');
-  const [isAnimating, setIsAnimating] = useState(false);
+const HorizontalScroller = ({ projects }: { projects: Project[] }) => {
   const shouldReduceMotion = useReducedMotion();
   const isTouchDevice = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
   const lighten = shouldReduceMotion || isTouchDevice;
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [itemsPerView, setItemsPerView] = useState(3);
+  const [activePage, setActivePage] = useState(0);
 
-  // Responsive items per view
-  const getItemsPerView = () => {
-    if (typeof window !== 'undefined') {
-      if (window.innerWidth >= 1024) return 3; // lg: 3 items
-      if (window.innerWidth >= 768) return 2;  // md: 2 items
-      return 1; // sm: 1 item
-    }
-    return 3;
-  };
-
-  const [itemsPerView, setItemsPerView] = useState(getItemsPerView);
-
-  // Update items per view on resize
   useEffect(() => {
-    const handleResize = () => setItemsPerView(getItemsPerView());
-    if (typeof window !== 'undefined') {
-      window.addEventListener('resize', handleResize);
-      return () => window.removeEventListener('resize', handleResize);
-    }
+    const calc = () => {
+      if (typeof window === 'undefined') return;
+      if (window.innerWidth >= 1024) setItemsPerView(3);
+      else if (window.innerWidth >= 768) setItemsPerView(2);
+      else setItemsPerView(1);
+    };
+    calc();
+    window.addEventListener('resize', calc);
+    return () => window.removeEventListener('resize', calc);
   }, []);
 
-  const totalSlides = Math.ceil(projects.length / itemsPerView);
+  const totalPages = Math.max(1, Math.ceil(projects.length / itemsPerView));
 
-  const nextSlide = () => {
-    if (isAnimating) return;
-    setIsAnimating(true);
-    setDirection('next');
-    setActiveSlide((prev) => (prev + 1) % totalSlides);
-    setTimeout(() => setIsAnimating(false), 500);
-  };
-
-  const prevSlide = () => {
-    if (isAnimating) return;
-    setIsAnimating(true);
-    setDirection('prev');
-    setActiveSlide((prev) => (prev - 1 + totalSlides) % totalSlides);
-    setTimeout(() => setIsAnimating(false), 500);
-  };
-
-  const goToSlide = (index) => {
-    if (isAnimating || index === activeSlide) return;
-    setIsAnimating(true);
-    setDirection(index > activeSlide ? 'next' : 'prev');
-    setActiveSlide(index);
-    setTimeout(() => setIsAnimating(false), 500);
-  };
-
-  // Auto-play functionality (disabled on touch/reduced-motion)
   useEffect(() => {
-    if (lighten) return;
-    const interval = setInterval(() => {
-      if (!isAnimating) {
-        nextSlide();
-      }
-    }, 6000);
-    return () => clearInterval(interval);
-  }, [activeSlide, isAnimating, lighten]);
+    const el = containerRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      const maxScroll = el.scrollWidth - el.clientWidth;
+      const progress = maxScroll > 0 ? el.scrollLeft / maxScroll : 0;
+      const idx = Math.round(progress * (totalPages - 1));
+      setActivePage(idx);
+    };
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => el.removeEventListener('scroll', onScroll as any);
+  }, [totalPages]);
 
-  // Get current projects for the slide
-  const currentProjects = projects.slice(
-    activeSlide * itemsPerView,
-    (activeSlide + 1) * itemsPerView
-  );
+  const scrollToPage = (page: number) => {
+    const el = containerRef.current;
+    if (!el) return;
+    const maxScroll = el.scrollWidth - el.clientWidth;
+    const target = totalPages > 1 ? (page / (totalPages - 1)) * maxScroll : 0;
+    el.scrollTo({ left: target, behavior: 'smooth' });
+  };
 
   return (
-    <div className="relative w-full mx-auto">
-      {/* Carousel Container */}
-      <div className="relative overflow-hidden rounded-2xl">
-        <AnimatePresence mode="wait" custom={direction}>
-          <motion.div
-            key={`slide-${activeSlide}`}
-            initial={{ 
-              opacity: 0, 
-              x: direction === 'next' ? (lighten ? 120 : 300) : (lighten ? -120 : -300)
-            }}
-            animate={{ 
-              opacity: 1, 
-              x: 0
-            }}
-            exit={{ 
-              opacity: 0, 
-              x: direction === 'next' ? (lighten ? -120 : -300) : (lighten ? 120 : 300)
-            }}
-            transition={{ 
-              duration: lighten ? 0.35 : 0.5, 
-              ease: [0.4, 0, 0.2, 1]
-            }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-          >
-            {currentProjects.map((project, index) => (
-              <motion.div
-                key={project.title}
-                initial={{ opacity: 0, y: lighten ? 12 : 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: lighten ? 0.35 : 0.6, delay: index * (lighten ? 0.05 : 0.1) }}
-                className="w-full"
-              >
-                <Card className="glass-card-elevated overflow-hidden group hover:scale-[1.01] transition-all duration-300 bg-transparent/15 shadow-glow border border-white/10 backdrop-blur-sm">
-                  <div className="aspect-video overflow-hidden relative">
-                    <motion.img 
-                      src={project.image} 
-                      alt={project.title}
-                      className="w-full h-full object-cover transition-transform duration-500"
-                      whileHover={lighten ? undefined : { scale: 1.08 }}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                  </div>
-                  
-                  <div className="p-6 space-y-4">
-                    <h3 className="text-xl font-semibold group-hover:text-primary transition-colors duration-300">
-                      {project.title}
-                    </h3>
-                    
-                    <p className="text-muted-foreground line-clamp-3 leading-relaxed">
-                      {project.description}
-                    </p>
-                    
-                    <div className="flex flex-wrap gap-2">
-                      {project.technologies.map((tech) => (
-                        <Badge 
-                          key={tech} 
-                          variant="secondary" 
-                          className="bg-surface/50 border border-white/5 text-xs hover:bg-primary/10 transition-colors duration-300"
-                        >
-                          {tech}
-                        </Badge>
-                      ))}
-                    </div>
-                    
-                    <div className="flex gap-3 pt-2">
-                      <Button size="sm" className="btn-primary flex-1 hover:scale-105 transition-transform duration-200">
-                        <ExternalLink className="h-4 w-4 mr-2" />
-                        Live Demo
-                      </Button>
-                      <Button size="sm" variant="outline" className="glass-card flex-1 hover:scale-105 transition-transform duration-200">
-                        <Github className="h-4 w-4 mr-2" />
-                        Code
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
-              </motion.div>
-            ))}
-          </motion.div>
-        </AnimatePresence>
-      </div>
-
-      {/* Navigation Arrows */}
-      {totalSlides > 1 && (
-        <>
-          <motion.button
-            onClick={prevSlide}
-            disabled={isAnimating}
-            whileHover={{ scale: 1.1, x: -5 }}
-            whileTap={{ scale: 0.9 }}
-            className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/20 backdrop-blur-md border border-white/10 flex items-center justify-center text-white hover:bg-black/40 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg z-10"
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </motion.button>
-          
-          <motion.button
-            onClick={nextSlide}
-            disabled={isAnimating}
-            whileHover={{ scale: 1.1, x: 5 }}
-            whileTap={{ scale: 0.9 }}
-            className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/20 backdrop-blur-md border border-white/10 flex items-center justify-center text-white hover:bg-black/40 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg z-10"
-          >
-            <ChevronRight className="h-5 w-5" />
-          </motion.button>
-        </>
-      )}
-
-      {/* Dots Navigation */}
-      {totalSlides > 1 && (
-        <div className="flex justify-center mt-8 gap-3">
-          {Array.from({ length: totalSlides }).map((_, index) => (
-            <motion.button
-              key={index}
-              onClick={() => goToSlide(index)}
-              disabled={isAnimating}
-              whileHover={{ scale: 1.2 }}
-              whileTap={{ scale: 0.9 }}
-              className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                index === activeSlide
-                  ? 'bg-primary shadow-lg shadow-primary/50 scale-125'
-                  : 'bg-muted-foreground/30 hover:bg-muted-foreground/50'
-              }`}
-            />
+    <div className="relative">
+      <div ref={containerRef} className="overflow-x-auto overflow-y-visible snap-x snap-mandatory no-scrollbar overflow-hidden">
+        <div className="flex gap-6 min-w-0 px-1">
+          {projects.map((p) => (
+            <ProductCard key={p.title} project={p} lighten={lighten} />
           ))}
         </div>
-      )}
-
-      {/* Progress Bar */}
-      <div className="mt-4 w-full h-1 bg-white/10 rounded-full overflow-hidden">
-        <motion.div
-          className="h-full bg-gradient-to-r from-primary to-accent"
-          initial={{ width: 0 }}
-          animate={{ width: `${((activeSlide + 1) / totalSlides) * 100}%` }}
-          transition={{ duration: 0.5, ease: "easeInOut" }}
-        />
       </div>
+      {totalPages > 1 && (
+        <div className="flex justify-center mt-6 gap-3">
+          {Array.from({ length: totalPages }).map((_, i) => (
+            <button
+              key={i}
+              aria-label={`Go to page ${i + 1}`}
+              onClick={() => scrollToPage(i)}
+              className={`w-2.5 h-2.5 rounded-full transition-all duration-200 ${
+                i === activePage ? 'bg-primary scale-125 shadow-[0_0_12px_rgba(99,102,241,0.6)]' : 'bg-muted-foreground/40 hover:bg-muted-foreground/70'
+              }`}
+            />)
+          )}
+        </div>
+      )}
     </div>
   );
 };
 
+const otherProjectsFallback: Project[] = [
+  {
+    title: 'TypeScript Utils Pack',
+    description: 'A collection of typed utilities and helpers for day-to-day dev.',
+    image: 'https://images.unsplash.com/photo-1515879218367-8466d910aaa4?w=400&h=300&fit=crop',
+    technologies: ['TypeScript', 'Vitest'],
+    liveUrl: '#',
+    githubUrl: '#'
+  },
+  {
+    title: 'Python Data Scripts',
+    description: 'Small scripts for scraping and CSV processing with clean CLIs.',
+    image: 'https://images.unsplash.com/photo-1518779578993-ec3579fee39f?w=400&h=300&fit=crop',
+    technologies: ['Python', 'Pandas'],
+    liveUrl: '#',
+    githubUrl: '#'
+  },
+  {
+    title: 'CLI Tools',
+    description: 'Handy Node CLI tools for project automation and DX improvements.',
+    image: 'https://images.unsplash.com/photo-1517180102446-f3ece451e9d8?w=400&h=300&fit=crop',
+    technologies: ['Node.js'],
+    liveUrl: '#',
+    githubUrl: '#'
+  }
+];
+
 export const Projects = () => {
-  const [activeTab, setActiveTab] = useState('web');
-  const [webSlide, setWebSlide] = useState(0);
-  const [aiSlide, setAiSlide] = useState(0);
+  const [activeTab, setActiveTab] = useState<'web' | 'ai' | 'other'>('web');
+  const [webProjects, setWebProjects] = useState<Project[]>(webProjectsFallback as Project[]);
+  const [aiProjects, setAiProjects] = useState<Project[]>(aiProjectsFallback as Project[]);
+  const [otherProjects, setOtherProjects] = useState<Project[]>(otherProjectsFallback);
+
+  useEffect(() => {
+    if (!hasSanity || !sanityClient) return;
+    const fetchAll = async () => {
+      try {
+        const [web, ai, other] = await Promise.all([
+          sanityClient.fetch(PROJECTS_BY_CATEGORY('web')),
+          sanityClient.fetch(PROJECTS_BY_CATEGORY('ai')),
+          sanityClient.fetch(PROJECTS_BY_CATEGORY('other')),
+        ]);
+        if (Array.isArray(web) && web.length) setWebProjects(web);
+        if (Array.isArray(ai) && ai.length) setAiProjects(ai);
+        if (Array.isArray(other) && other.length) setOtherProjects(other);
+      } catch (e) {
+        // fail silently, keep fallbacks
+      }
+    };
+    fetchAll();
+  }, []);
 
   const tabVariants = {
     active: { 
@@ -433,7 +295,7 @@ export const Projects = () => {
             className="inline-block mb-4"
           >
             <Badge variant="secondary" className="bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20 text-primary px-4 py-2 text-sm font-medium shadow-glow">
-              ✨ My Portfolio
+              ✨ Projects
             </Badge>
           </motion.div>
           
@@ -453,7 +315,7 @@ export const Projects = () => {
             className="max-w-3xl mx-auto"
           >
             <p className="text-xl md:text-2xl text-muted-foreground mb-4 leading-relaxed">
-              A showcase of innovative solutions spanning web development and artificial intelligence
+              {/* Side-scrolling product carousel. 3 on large, 2 on medium, 1 on small screens. */}
             </p>
             <div className="flex justify-center items-center gap-2 text-muted-foreground/60">
               <div className="w-12 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent"></div>
@@ -496,29 +358,32 @@ export const Projects = () => {
               <Brain className="h-5 w-5 mr-2" />
               Agentic AI Systems
             </motion.button>
+            
+            <motion.button
+              onClick={() => setActiveTab('other')}
+              variants={tabVariants}
+              animate={activeTab === 'other' ? 'active' : 'inactive'}
+              transition={{ duration: 0.3 }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="flex items-center px-6 py-3 rounded-md transition-all duration-300 border ml-2 backdrop-blur-sm"
+            >
+              Others
+            </motion.button>
           </div>
         </motion.div>
 
-        {/* Project Carousel */}
+        {/* Product Carousel (Horizontal Scroll) */}
         <motion.div
           key={activeTab}
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.4 }}
+
         >
-          {activeTab === 'web' ? (
-            <ProjectCarousel 
-              projects={webProjects} 
-              activeSlide={webSlide} 
-              setActiveSlide={setWebSlide} 
-            />
-          ) : (
-            <ProjectCarousel 
-              projects={aiProjects} 
-              activeSlide={aiSlide} 
-              setActiveSlide={setAiSlide} 
-            />
-          )}
+          {activeTab === 'web' && <HorizontalScroller projects={webProjects} />}
+          {activeTab === 'ai' && <HorizontalScroller projects={aiProjects} />}
+          {activeTab === 'other' && <HorizontalScroller projects={otherProjects} />}
         </motion.div>
       </div>
     </section>

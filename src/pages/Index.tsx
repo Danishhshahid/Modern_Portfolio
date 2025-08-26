@@ -3,6 +3,7 @@ import { Navigation } from '@/components/Portfolio/Navigation';
 import { Hero } from '@/components/Portfolio/Hero';
 import { Skills } from '@/components/Portfolio/Skills';
 import { Projects } from '@/components/Portfolio/Projects';
+import { Presentations } from '@/components/Portfolio/Presentations';
 import { Contact } from '@/components/Portfolio/Contact';
 
 const Index = () => {
@@ -22,6 +23,7 @@ const Index = () => {
         
         <Skills />
         <Projects />
+        <Presentations />
         <Contact />
       </main>
       
