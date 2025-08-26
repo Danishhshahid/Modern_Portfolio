@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -93,13 +93,13 @@ const aiProjects = [
   }
 ];
 
-const CarouselItem = ({ project, index, direction }) => (
+const CarouselItem = ({ project, index, direction, lighten }: { project: any; index: number; direction: 'next' | 'prev'; lighten: boolean }) => (
   <motion.div
     key={`${project.title}-${index}`}
     initial={{ 
       opacity: 0, 
-      x: direction === 'next' ? 300 : -300,
-      scale: 0.8 
+      x: direction === 'next' ? (lighten ? 120 : 300) : (lighten ? -120 : -300),
+      scale: lighten ? 0.95 : 0.8 
     }}
     animate={{ 
       opacity: 1, 
@@ -108,13 +108,13 @@ const CarouselItem = ({ project, index, direction }) => (
     }}
     exit={{ 
       opacity: 0, 
-      x: direction === 'next' ? -300 : 300,
-      scale: 0.8 
+      x: direction === 'next' ? (lighten ? -120 : -300) : (lighten ? 120 : 300),
+      scale: lighten ? 0.95 : 0.8 
     }}
     transition={{ 
-      duration: 0.5, 
+      duration: lighten ? 0.35 : 0.5, 
       ease: [0.4, 0, 0.2, 1],
-      opacity: { duration: 0.3 }
+      opacity: { duration: lighten ? 0.2 : 0.3 }
     }}
     className="w-full"
   >
@@ -124,7 +124,7 @@ const CarouselItem = ({ project, index, direction }) => (
           src={project.image} 
           alt={project.title}
           className="w-full h-full object-cover transition-transform duration-700"
-          whileHover={{ scale: 1.1 }}
+          whileHover={lighten ? undefined : { scale: 1.1 }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
       </div>
@@ -132,7 +132,7 @@ const CarouselItem = ({ project, index, direction }) => (
       <div className="p-6 space-y-4">
         <motion.h3 
           className="text-xl font-semibold group-hover:text-primary transition-colors duration-300"
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: lighten ? 10 : 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
@@ -141,7 +141,7 @@ const CarouselItem = ({ project, index, direction }) => (
         
         <motion.p 
           className="text-muted-foreground line-clamp-3 leading-relaxed"
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: lighten ? 10 : 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
         >
@@ -150,7 +150,7 @@ const CarouselItem = ({ project, index, direction }) => (
         
         <motion.div 
           className="flex flex-wrap gap-2"
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: lighten ? 10 : 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
         >
@@ -167,7 +167,7 @@ const CarouselItem = ({ project, index, direction }) => (
         
         <motion.div 
           className="flex gap-3 pt-2"
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: lighten ? 10 : 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
         >
@@ -188,6 +188,9 @@ const CarouselItem = ({ project, index, direction }) => (
 const ProjectCarousel = ({ projects, activeSlide, setActiveSlide }) => {
   const [direction, setDirection] = useState('next');
   const [isAnimating, setIsAnimating] = useState(false);
+  const shouldReduceMotion = useReducedMotion();
+  const isTouchDevice = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+  const lighten = shouldReduceMotion || isTouchDevice;
 
   // Responsive items per view
   const getItemsPerView = () => {
@@ -236,16 +239,16 @@ const ProjectCarousel = ({ projects, activeSlide, setActiveSlide }) => {
     setTimeout(() => setIsAnimating(false), 500);
   };
 
-  // Auto-play functionality (optional)
+  // Auto-play functionality (disabled on touch/reduced-motion)
   useEffect(() => {
+    if (lighten) return;
     const interval = setInterval(() => {
       if (!isAnimating) {
         nextSlide();
       }
-    }, 5000);
-
+    }, 6000);
     return () => clearInterval(interval);
-  }, [activeSlide, isAnimating]);
+  }, [activeSlide, isAnimating, lighten]);
 
   // Get current projects for the slide
   const currentProjects = projects.slice(
@@ -262,7 +265,7 @@ const ProjectCarousel = ({ projects, activeSlide, setActiveSlide }) => {
             key={`slide-${activeSlide}`}
             initial={{ 
               opacity: 0, 
-              x: direction === 'next' ? 300 : -300
+              x: direction === 'next' ? (lighten ? 120 : 300) : (lighten ? -120 : -300)
             }}
             animate={{ 
               opacity: 1, 
@@ -270,10 +273,10 @@ const ProjectCarousel = ({ projects, activeSlide, setActiveSlide }) => {
             }}
             exit={{ 
               opacity: 0, 
-              x: direction === 'next' ? -300 : 300
+              x: direction === 'next' ? (lighten ? -120 : -300) : (lighten ? 120 : 300)
             }}
             transition={{ 
-              duration: 0.5, 
+              duration: lighten ? 0.35 : 0.5, 
               ease: [0.4, 0, 0.2, 1]
             }}
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
@@ -281,18 +284,18 @@ const ProjectCarousel = ({ projects, activeSlide, setActiveSlide }) => {
             {currentProjects.map((project, index) => (
               <motion.div
                 key={project.title}
-                initial={{ opacity: 0, y: 30 }}
+                initial={{ opacity: 0, y: lighten ? 12 : 30 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
+                transition={{ duration: lighten ? 0.35 : 0.6, delay: index * (lighten ? 0.05 : 0.1) }}
                 className="w-full"
               >
-                <Card className="glass-card-elevated overflow-hidden group hover:scale-[1.02] transition-all duration-500 bg-transparent/15 shadow-glow border border-white/10 backdrop-blur-sm">
+                <Card className="glass-card-elevated overflow-hidden group hover:scale-[1.01] transition-all duration-300 bg-transparent/15 shadow-glow border border-white/10 backdrop-blur-sm">
                   <div className="aspect-video overflow-hidden relative">
                     <motion.img 
                       src={project.image} 
                       alt={project.title}
-                      className="w-full h-full object-cover transition-transform duration-700"
-                      whileHover={{ scale: 1.1 }}
+                      className="w-full h-full object-cover transition-transform duration-500"
+                      whileHover={lighten ? undefined : { scale: 1.08 }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                   </div>

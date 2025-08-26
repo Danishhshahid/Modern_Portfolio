@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,8 @@ import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
 export const Contact = () => {
+  const shouldReduceMotion = useReducedMotion();
+  const isTouchDevice = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -45,9 +47,9 @@ export const Contact = () => {
     <section id="contact" className="py-20 px-6">
       <div className="max-w-6xl mx-auto">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
+          initial={shouldReduceMotion ? undefined : { opacity: 0, y: 20 }}
+          whileInView={shouldReduceMotion ? undefined : { opacity: 1, y: 0 }}
+          transition={shouldReduceMotion ? undefined : { duration: 0.5 }}
           className="text-center mb-16"
         >
           <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
@@ -61,9 +63,9 @@ export const Contact = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Contact Information */}
           <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8 }}
+            initial={shouldReduceMotion ? undefined : { opacity: 0, x: -20 }}
+            whileInView={shouldReduceMotion ? undefined : { opacity: 1, x: 0 }}
+            transition={shouldReduceMotion ? undefined : { duration: 0.5 }}
             className="space-y-6"
           >
             <Card className="glass-card p-6 bg-transparent/15 shadow-glow">
@@ -103,9 +105,9 @@ export const Contact = () => {
             </Card>
 
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
+              initial={shouldReduceMotion ? undefined : { opacity: 0, y: 12 }}
+              whileInView={shouldReduceMotion ? undefined : { opacity: 1, y: 0 }}
+              transition={shouldReduceMotion ? undefined : { duration: 0.45, delay: 0.1 }}
               className="pt-6"
             >
               <h4 className="font-semibold mb-4">Let's Connect</h4>
@@ -134,9 +136,9 @@ export const Contact = () => {
 
           {/* Contact Form */}
           <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8 }}
+            initial={shouldReduceMotion ? undefined : { opacity: 0, x: 20 }}
+            whileInView={shouldReduceMotion ? undefined : { opacity: 1, x: 0 }}
+            transition={shouldReduceMotion ? undefined : { duration: 0.5 }}
             className="lg:col-span-2"
           >
             <Card className="glass-card-elevated p-8 bg-transparent/15 shadow-glow">
@@ -202,11 +204,15 @@ export const Contact = () => {
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? (
-                    <motion.div
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                      className="h-4 w-4 mr-2 border-2 border-white/30 border-t-white rounded-full"
-                    />
+                    isTouchDevice || shouldReduceMotion ? (
+                      <span className="h-4 w-4 mr-2 inline-block align-middle">⏳</span>
+                    ) : (
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
+                        className="h-4 w-4 mr-2 border-2 border-white/30 border-t-white rounded-full"
+                      />
+                    )
                   ) : (
                     <Send className="h-4 w-4 mr-2" />
                   )}
