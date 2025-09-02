@@ -102,10 +102,11 @@ type Project = {
   technologies: string[];
   liveUrl: string;
   githubUrl: string;
+  featured?: boolean;
 };
 
 const ProductCard = ({ project, lighten }: { project: Project; lighten: boolean }) => (
-  <Card className="glass-card-elevated overflow-hidden group bg-transparent/15 shadow-glow border border-white/10 backdrop-blur-sm w-[85vw] sm:w-[70vw] md:w-[48%] lg:w-[32%] flex-shrink-0 snap-start">
+  <Card className="glass-card-elevated overflow-hidden group bg-transparent/15 shadow-glow border border-white/10 backdrop-blur-sm w-[85vw] xs:w-[78vw] sm:w-[45vw] md:w-[40vw] lg:w-[32%] xl:w-[31%] flex-shrink-0 snap-start mx-auto sm:mx-0">
     <div className="aspect-video overflow-hidden relative">
       <motion.img 
         src={project.image} 
@@ -116,25 +117,25 @@ const ProductCard = ({ project, lighten }: { project: Project; lighten: boolean 
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
     </div>
     
-    <div className="p-5 space-y-3">
+    <div className="p-4 sm:p-5 space-y-3">
       <h3 className="text-lg font-semibold group-hover:text-primary transition-colors duration-200">{project.title}</h3>
       <p className="text-muted-foreground line-clamp-3 leading-relaxed text-sm">{project.description}</p>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-1.5 sm:gap-2">
         {project.technologies.map((tech) => (
-          <Badge key={tech} variant="secondary" className="bg-surface/50 border border-white/5 text-xs">
+          <Badge key={tech} variant="secondary" className="bg-surface/50 border border-white/5 text-xs py-1 px-2">
             {tech}
           </Badge>
         ))}
       </div>
-      <div className="flex gap-3 pt-2">
-        <Button size="sm" asChild className="btn-primary flex-1">
+      <div className="flex gap-2 sm:gap-3 pt-2">
+        <Button size="sm" asChild className="btn-primary flex-1 text-xs sm:text-sm">
           <a href={project.liveUrl} target="_blank" rel="noreferrer">
-            <ExternalLink className="h-4 w-4 mr-2" /> Live
+            <ExternalLink className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" /> Live
           </a>
         </Button>
-        <Button size="sm" variant="outline" asChild className="glass-card flex-1">
+        <Button size="sm" variant="outline" asChild className="glass-card flex-1 text-xs sm:text-sm">
           <a href={project.githubUrl} target="_blank" rel="noreferrer">
-            <Github className="h-4 w-4 mr-2" /> Code
+            <Github className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" /> Code
           </a>
         </Button>
       </div>
@@ -147,14 +148,17 @@ const HorizontalScroller = ({ projects }: { projects: Project[] }) => {
   const isTouchDevice = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
   const lighten = shouldReduceMotion || isTouchDevice;
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const [itemsPerView, setItemsPerView] = useState(3);
+  const [itemsPerView, setItemsPerView] = useState(1);
   const [activePage, setActivePage] = useState(0);
 
   useEffect(() => {
     const calc = () => {
       if (typeof window === 'undefined') return;
-      if (window.innerWidth >= 1024) setItemsPerView(3);
-      else if (window.innerWidth >= 768) setItemsPerView(2);
+      const width = window.innerWidth;
+      if (width >= 1280) setItemsPerView(3);
+      else if (width >= 1024) setItemsPerView(3);
+      else if (width >= 768) setItemsPerView(2);
+      else if (width >= 640) setItemsPerView(1.5);
       else setItemsPerView(1);
     };
     calc();
@@ -175,7 +179,7 @@ const HorizontalScroller = ({ projects }: { projects: Project[] }) => {
     };
     el.addEventListener('scroll', onScroll, { passive: true });
     return () => el.removeEventListener('scroll', onScroll as any);
-  }, [totalPages]);
+  }, [totalPages, itemsPerView]);
 
   const scrollToPage = (page: number) => {
     const el = containerRef.current;
@@ -187,15 +191,19 @@ const HorizontalScroller = ({ projects }: { projects: Project[] }) => {
 
   return (
     <div className="relative">
-      <div ref={containerRef} className="overflow-x-auto overflow-y-visible snap-x snap-mandatory no-scrollbar overflow-hidden">
-        <div className="flex gap-6 min-w-0 px-1">
+      <div 
+        ref={containerRef} 
+        className="overflow-x-auto overflow-y-visible snap-x snap-mandatory no-scrollbar"
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+      >
+        <div className="flex gap-4 sm:gap-6 min-w-0 px-4 sm:px-1 pb-2">
           {projects.map((p) => (
             <ProductCard key={p.title} project={p} lighten={lighten} />
           ))}
         </div>
       </div>
       {totalPages > 1 && (
-        <div className="flex justify-center mt-6 gap-3">
+        <div className="flex justify-center mt-6 gap-2 sm:gap-3">
           {Array.from({ length: totalPages }).map((_, i) => (
             <button
               key={i}
@@ -204,8 +212,8 @@ const HorizontalScroller = ({ projects }: { projects: Project[] }) => {
               className={`w-2.5 h-2.5 rounded-full transition-all duration-200 ${
                 i === activePage ? 'bg-primary scale-125 shadow-[0_0_12px_rgba(99,102,241,0.6)]' : 'bg-muted-foreground/40 hover:bg-muted-foreground/70'
               }`}
-            />)
-          )}
+            />
+          ))}
         </div>
       )}
     </div>
@@ -280,21 +288,23 @@ export const Projects = () => {
   };
 
   return (
-    <section id="projects" className="py-20 px-6">
+    <section id="projects" className="py-12 sm:py-16 md:py-20 px-4 sm:px-6">
       <div className="max-w-6xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          className="text-center mb-16"
+          viewport={{ once: true, margin: "-100px" }}
+          className="text-center mb-12 sm:mb-16"
         >
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.6, delay: 0.2 }}
+            viewport={{ once: true }}
             className="inline-block mb-4"
           >
-            <Badge variant="secondary" className="bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20 text-primary px-4 py-2 text-sm font-medium shadow-glow">
+            <Badge variant="secondary" className="bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20 text-primary px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium shadow-glow">
               ✨ Projects
             </Badge>
           </motion.div>
@@ -303,7 +313,8 @@ export const Projects = () => {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.3 }}
-            className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent leading-tight"
+            viewport={{ once: true }}
+            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent leading-tight"
           >
             Featured Projects
           </motion.h2>
@@ -312,15 +323,13 @@ export const Projects = () => {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4 }}
+            viewport={{ once: true }}
             className="max-w-3xl mx-auto"
           >
-            <p className="text-xl md:text-2xl text-muted-foreground mb-4 leading-relaxed">
-              {/* Side-scrolling product carousel. 3 on large, 2 on medium, 1 on small screens. */}
-            </p>
-            <div className="flex justify-center items-center gap-2 text-muted-foreground/60">
-              <div className="w-12 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent"></div>
-              <span className="text-sm font-medium px-4">Building the Future</span>
-              <div className="w-12 h-px bg-gradient-to-r from-transparent via-accent/50 to-transparent"></div>
+            <div className="flex justify-center items-center gap-2 text-muted-foreground/60 mt-4 sm:mt-6">
+              <div className="w-8 sm:w-12 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent"></div>
+              <span className="text-xs sm:text-sm font-medium px-2 sm:px-4">Building the Future</span>
+              <div className="w-8 sm:w-12 h-px bg-gradient-to-r from-transparent via-accent/50 to-transparent"></div>
             </div>
           </motion.div>
         </motion.div>
@@ -330,9 +339,10 @@ export const Projects = () => {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="flex justify-center mb-12"
+          viewport={{ once: true }}
+          className="flex justify-center mb-8 sm:mb-12 px-2"
         >
-          <div className="flex p-1 bg-white/5 rounded-lg backdrop-blur-sm border border-white/10">
+          <div className="flex flex-wrap sm:flex-nowrap justify-center p-1 bg-white/5 rounded-lg backdrop-blur-sm border border-white/10 w-full max-w-md sm:max-w-xl">
             <motion.button
               onClick={() => setActiveTab('web')}
               variants={tabVariants}
@@ -340,10 +350,10 @@ export const Projects = () => {
               transition={{ duration: 0.3 }}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="flex items-center px-6 py-3 rounded-md transition-all duration-300 border backdrop-blur-sm"
+              className="flex items-center px-4 py-2 sm:px-5 sm:py-3 rounded-md transition-all duration-300 border backdrop-blur-sm text-sm sm:text-base mb-1 sm:mb-0 flex-1 text-center justify-center"
             >
-              <Globe className="h-5 w-5 mr-2" />
-              Web Development
+              <Globe className="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2" />
+              <span className="truncate">Web Dev</span>
             </motion.button>
             
             <motion.button
@@ -353,10 +363,10 @@ export const Projects = () => {
               transition={{ duration: 0.3 }}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="flex items-center px-6 py-3 rounded-md transition-all duration-300 border ml-2 backdrop-blur-sm"
+              className="flex items-center px-4 py-2 sm:px-5 sm:py-3 rounded-md transition-all duration-300 border mx-1 sm:mx-2 backdrop-blur-sm text-sm sm:text-base mb-1 sm:mb-0 flex-1 text-center justify-center"
             >
-              <Brain className="h-5 w-5 mr-2" />
-              Agentic AI Systems
+              <Brain className="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2" />
+              <span className="truncate">AI Systems</span>
             </motion.button>
             
             <motion.button
@@ -366,7 +376,7 @@ export const Projects = () => {
               transition={{ duration: 0.3 }}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="flex items-center px-6 py-3 rounded-md transition-all duration-300 border ml-2 backdrop-blur-sm"
+              className="flex items-center px-4 py-2 sm:px-5 sm:py-3 rounded-md transition-all duration-300 border backdrop-blur-sm text-sm sm:text-base flex-1 text-center justify-center"
             >
               Others
             </motion.button>
@@ -379,7 +389,7 @@ export const Projects = () => {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-
+          className="overflow-hidden"
         >
           {activeTab === 'web' && <HorizontalScroller projects={webProjects} />}
           {activeTab === 'ai' && <HorizontalScroller projects={aiProjects} />}
